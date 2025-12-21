@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>半年日記</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-stone-50 min-h-screen flex flex-col md:flex-row">
+    <div
+      id="login-screen"
+      class="fixed inset-0 bg-stone-100 z-50 flex items-center justify-center hidden"
+    >
+      <div class="text-center">
+        <h1 class="text-3xl font-bold text-stone-800 mb-8 font-mono">
+          Half Year Diary
+        </h1>
+        <button
+          id="loginBtn"
+          class="bg-white border border-stone-300 px-6 py-3 rounded-full shadow-sm hover:shadow-md transition flex items-center gap-3 mx-auto text-stone-700 font-bold"
+        >
+          <img
+            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+            width="20"
+          />
+          Googleでログイン
+        </button>
+      </div>
+    </div>
+
+    <aside class="w-full md:w-64 bg-slate-200 p-6 flex-shrink-0">
+      <h2
+        class="text-xl font-bold mb-6 border-b border-stone-600 pb-2 italic text-stone-400"
+      >
+        Memory Log
+      </h2>
+      <nav>
+        <ul class="space-y-1" id="month-list"></ul>
+      </nav>
+      <button
+        id="logoutBtn"
+        class="mt-10 text-stone-500 text-xs hover:text-stone-800 underline"
+      >
+        ログアウト
+      </button>
+    </aside>
+
+    <main class="flex-1 p-6 md:p-12">
+      <div class="max-w-2xl mx-auto">
+        <header class="mb-10 text-center">
+          <h1
+            id="current-title"
+            class="text-4xl font-mono font-bold text-stone-800"
+          >
+            今日の日記
+          </h1>
+          <p class="text-stone-400 mt-2 text-sm">
+            ※保存（★）しない日記は、半年経つと消えます
+          </p>
+        </header>
+
+        <section
+          class="mb-12 bg-white p-6 rounded-2xl shadow-sm border border-stone-200"
+        >
+          <form id="diaryForm">
+            <textarea
+              id="diaryContent"
+              rows="4"
+              placeholder="日記を書く✏️"
+              required
+              class="w-full p-2 text-lg resize-none outline-none text-stone-700"
+            ></textarea>
+            <button
+              type="submit"
+              class="w-full bg-stone-800 text-white py-3 rounded-xl hover:bg-stone-700 transition font-bold shadow-md"
+            >
+              完了
+            </button>
+          </form>
+        </section>
+
+        <div id="diaryList" class="space-y-6"></div>
+      </div>
+    </main>
+
+    <script type="module" src="script.js"></script>
+  </body>
+</html>
