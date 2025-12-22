@@ -27,7 +27,7 @@ const firebaseConfig = {
   storageBucket: "half-year-diary.firebasestorage.app",
   messagingSenderId: "52175563386",
   appId: "1:52175563386:web:f65720a571abcbbe66a9c3",
-  measurementId: "G-WTQC01FGM0"
+  measurementId: "G-WTQC01FGM0",
 };
 
 const app = initializeApp(firebaseConfig);
@@ -98,6 +98,7 @@ async function loadDiaries(uid) {
     })" class="${
       diary.is_marked ? "text-amber-500 font-bold" : "text-stone-300"
     }">${diary.is_marked ? "★ 保存済み" : "☆ 保存する"}</button>
+    <button onclick="toggleEdit('${id}')" class="hover:text-blue-500">編集</button>
                         <button onclick="deleteDiary('${id}')" class="hover:text-red-400">削除</button>
                     </div>
                 </div>
