@@ -72,8 +72,16 @@ function renderSidebar() {
   class="w-full text-left block p-3 rounded-lg hover:bg-stone-300 transition border-2 border-stone-300 text-gray-700 font-bold">
   すべて表示
   </button>
-  </li>`;
+  </li>
 
+  <li>
+    <button
+      onclick="filterByMarked()"
+      class="w-full text-left block p-3 rounded-lg hover:bg-amber-100 transition border-2 border-stone-300 text-gray-700 font-bold">
+      ★ 保存済み
+    </button>
+  </li>`;
+  
   html += months
     .map((m) => {
       return `
@@ -218,30 +226,83 @@ window.deleteDiary = async (id) => {
   }
 };
 
+//　日記の編集
 window.toggleEdit = async (id) => {
-  const docRef = doc(db, "diaries", id);
-  const docSnap = await getDocs(
-    query(collection(db, "diaries"), where("__name__", "==", id))
+  const user = auth.currentUser;
+  if (!user) return;
+
+  // 1. クリックされた日記の要素を特定
+  const article = document.querySelector(`button[onclick*="toggleEdit('${id}')"]`).closest("article");
+  const contentP = article.querySelector("p");
+  const currentContent = contentP.innerText;
+
+  // 二重クリック防止（すでにtextareaがあれば何もしない）
+  if (article.querySelector("textarea")) return;
+
+  // 2. 表示を textarea と 保存・キャンセルボタンに書き換える
+  const originalHTML = contentP.outerHTML; // キャンセル時に戻すため保存
+  contentP.innerHTML = `
+    <textarea id="edit-area-${id}" 
+      class="w-full p-3 border-2 border-amber-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 bg-stone-50" 
+      rows="4">${currentContent}</textarea>
+    <div class="flex gap-2 mt-2">
+      <button id="save-btn-${id}" class="bg-amber-500 text-white px-4 py-1 rounded-full text-sm hover:bg-amber-600 transition">保存</button>
+      <button id="cancel-btn-${id}" class="bg-stone-200 text-stone-600 px-4 py-1 rounded-full text-sm hover:bg-stone-300 transition">キャンセル</button>
+    </div>
+  `;
+
+  // 3. 保存ボタンのクリックイベント
+  document.getElementById(`save-btn-${id}`).onclick = async () => {
+    const newContent = document.getElementById(`edit-area-${id}`).value;
+    
+    // 内容が空でなく、かつ変更がある場合のみ更新
+    if (newContent.trim() !== "" && newContent !== currentContent) {
+      try {
+        await updateDoc(doc(db, "diaries", id), {
+          content: newContent
+        });
+        loadDiaries(user.uid); // 再描画
+      } catch (error) {
+        console.error("編集失敗", error);
+        alert("保存に失敗しました。");
+      }
+    } else {
+      // 変更がなければ元に戻す
+      contentP.outerHTML = originalHTML;
+    }
+  };
+
+  // 4. キャンセルボタンのクリックイベント
+  document.getElementById(`cancel-btn-${id}`).onclick = () => {
+    contentP.outerHTML = originalHTML; // 元の <p> タグに戻す
+  };
+};
+
+// 保存済み（★）のみを表示する関数
+window.filterByMarked = async () => {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const diaryList = document.getElementById("diary-list");
+  diaryList.innerHTML = `<p class="text-center text-stone-400 font-mono italic">Loading marked diaries...</p>`;
+
+  // 表示タイトルの書き換え
+  document.getElementById("current-title").innerText = "保存した日記";
+
+  // クエリ作成: is_marked が true のものだけを抽出
+  const q = query(
+    collection(db, "diaries"),
+    where("uid", "==", user.uid),
+    where("is_marked", "==", true),
+    orderBy("createdAt", "desc")
   );
-  const article = document
-    .querySelector(`button[onclick*="${id}"]`)
-    .closest("article");
-  const currentContent = article.querySelector("p").innerText;
-  const newContent = prompt("日記を編集してください:", currentContent);
-  //キャンセル（null）または内容に変更がない場合は終了
-  if (
-    newContent === null ||
-    newContent === currentContent ||
-    newContent.trim() === ""
-  )
-    return;
+
   try {
-    await updateDoc(doc(db, "diaries", id), {
-      content: newContent,
-    });
-    loadDiaries(auth.currentUser.uid);
+    const querySnapshot = await getDocs(q);
+    renderDiariesFromSnapshot(querySnapshot);
   } catch (error) {
-    console.error("編集失敗", error);
-    alert("編集できませんでした。");
+    console.error("Error filtering marked diaries:", error);
+    // 複合クエリ（where + orderBy）の場合、初回実行時にFirebaseコンソールでインデックス作成が必要な場合があります。
+    // コンソールに表示されるリンクをクリックして作成してください。
   }
 };
